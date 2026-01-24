@@ -1,0 +1,6 @@
+# Torch/torchaudio installed via Dockerfile (CPU index) before this file
+whisperx>=3.7.4
+fastapi>=0.128.0
+uvicorn[standard]>=0.40.0
+python-multipart>=0.0.21
+structlog>=24.1.0
