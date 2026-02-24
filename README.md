@@ -95,11 +95,17 @@ curl -X POST "http://localhost:8000/transcribe?language=en" -F "file=@output.mp3
 
 ## Environment variables
 
-| Variable     | Default  | Description                                           |
-|--------------|----------|-------------------------------------------------------|
-| `MODEL_NAME` | `tiny`   | `tiny`, `base`, `small`, `medium`, `large-v2`. `tiny` is a good default on CPU (fast, low memory); use `base` or larger for higher quality. |
-| `BATCH_SIZE` | `8`      | Batch size (reduce if OOM).                           |
-| `LOG_FORMAT` | `console`| `json` in prod for Grafana (Docker sets `json`).      |
+| Variable        | Default  | Description                                                                 |
+|-----------------|----------|-----------------------------------------------------------------------------|
+| `MODEL_NAME`    | `base`   | `tiny`, `base`, `small`, `medium`, `large-v2`. Use `base` or larger for quality. |
+| `BATCH_SIZE`    | `8`      | Batch size (reduce if OOM).                                                |
+| `LOG_FORMAT`    | `console`| `json` in prod for Grafana (Docker sets `json`).                            |
+| `VAD_METHOD`    | `silero` | VAD method: `silero` (same as CLI `--vad_method silero`) or `pyannote`.    |
+| `VAD_CHUNK_SIZE`| `20`     | Chunk size (seconds) for VAD merging.                                     |
+| `VAD_ONSET`     | `0.35`    | VAD onset threshold.                                                        |
+| `VAD_OFFSET`    | `0.25`  | VAD offset threshold.                                                       |
+| `VAD_PAD_ONSET` | `0.2`    | Padding (seconds) before speech start (Silero VAD).                        |
+| `VAD_PAD_OFFSET`| `0.2`    | Padding (seconds) after speech end (Silero VAD).                            |
 
 Runs **CPU only** (`int8`); no GPU support.
 

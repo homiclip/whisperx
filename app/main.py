@@ -42,9 +42,15 @@ from fastapi.responses import JSONResponse  # noqa: E402
 # --- Config (env). CPU only, compute_type=int8. ---
 DEVICE = "cpu"
 COMPUTE_TYPE = "int8"
-MODEL_NAME = os.getenv("MODEL_NAME", "tiny")
+MODEL_NAME = os.getenv("MODEL_NAME", "base")
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "8"))
 LOG_FORMAT = os.getenv("LOG_FORMAT", "console")  # "json" for prod / Grafana
+VAD_METHOD = os.getenv("VAD_METHOD", "silero")
+VAD_CHUNK_SIZE = int(os.getenv("VAD_CHUNK_SIZE", "20"))
+VAD_ONSET = float(os.getenv("VAD_ONSET", "0.35"))
+VAD_OFFSET = float(os.getenv("VAD_OFFSET", "0.25"))
+VAD_PAD_ONSET = float(os.getenv("VAD_PAD_ONSET", "0.2"))
+VAD_PAD_OFFSET = float(os.getenv("VAD_PAD_OFFSET", "0.2"))
 
 # --- Global state (loaded at startup) ---
 _model = None
@@ -200,9 +206,18 @@ def _transcribe_sync(path: str, language: str | None, align: bool, initial_promp
         _model.options = replace(old_opts, initial_prompt=initial_prompt)
     try:
         if language:
-            result = _model.transcribe(audio, batch_size=BATCH_SIZE, language=language)
+            result = _model.transcribe(
+                audio,
+                batch_size=BATCH_SIZE,
+                language=language,
+                chunk_size=VAD_CHUNK_SIZE,
+            )
         else:
-            result = _model.transcribe(audio, batch_size=BATCH_SIZE)
+            result = _model.transcribe(
+                audio,
+                batch_size=BATCH_SIZE,
+                chunk_size=VAD_CHUNK_SIZE,
+            )
     finally:
         if old_opts is not None:
             _model.options = old_opts
@@ -225,8 +240,30 @@ async def lifespan(app: FastAPI):
         _redirect_logger(_name, attach_handler=False)
     _install_signal_handlers()
 
-    log.info("model_loading", model=MODEL_NAME, device=DEVICE)
-    _model = whisperx.load_model(MODEL_NAME, DEVICE, compute_type=COMPUTE_TYPE)
+    log.info(
+        "model_loading",
+        model=MODEL_NAME,
+        device=DEVICE,
+        vad_method=VAD_METHOD,
+        vad_chunk_size=VAD_CHUNK_SIZE,
+        vad_onset=VAD_ONSET,
+        vad_offset=VAD_OFFSET,
+        vad_pad_onset=VAD_PAD_ONSET,
+        vad_pad_offset=VAD_PAD_OFFSET,
+    )
+    _model = whisperx.load_model(
+        MODEL_NAME,
+        DEVICE,
+        compute_type=COMPUTE_TYPE,
+        vad_method=VAD_METHOD,
+        vad_options={
+            "chunk_size": VAD_CHUNK_SIZE,
+            "vad_onset": VAD_ONSET,
+            "vad_offset": VAD_OFFSET,
+            "pad_onset": VAD_PAD_ONSET,
+            "pad_offset": VAD_PAD_OFFSET,
+        },
+    )
     log.info("model_loaded", model=MODEL_NAME, device=DEVICE)
 
     yield
