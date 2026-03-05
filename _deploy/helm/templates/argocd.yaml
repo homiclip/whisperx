@@ -1,0 +1,26 @@
+{{- if .Values.argocd.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: whisperx
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  project: {{ .Values.argocd.project }}
+  source:
+    repoURL: {{ .Values.argocd.repoURL }}
+    targetRevision: {{ .Values.argocd.targetRevision }}
+    path: {{ .Values.argocd.path }}
+    helm:
+      releaseName: {{ .Release.Name }}
+      valueFiles: {{ toJson .Values.argocd.valueFiles }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Release.Namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+{{- end }}

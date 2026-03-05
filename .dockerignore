@@ -9,6 +9,7 @@ venv
 *.md
 .github
 Makefile
-scripts
+_scripts
 docker-compose*.yml
 .dockerignore
+.semver
