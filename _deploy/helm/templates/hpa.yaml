@@ -1,0 +1,33 @@
+{{- if .Values.whisperx.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: whisperx
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "whisperx.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: whisperx
+  minReplicas: {{ .Values.whisperx.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.whisperx.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.whisperx.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.whisperx.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.whisperx.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.whisperx.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

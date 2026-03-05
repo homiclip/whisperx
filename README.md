@@ -26,6 +26,7 @@ From the project root (creates/uses `.venv`). Run `make help` to list all target
 | `lint`     | Run ruff on the code (requires `deps-lint`)      |
 | `image`    | Build multi-arch Docker image (no push)          |
 | `push`     | Build and push image to Docker Hub               |
+| `release`  | Release new version                              | 
 
 ```bash
 make help                     # list all targets
@@ -34,15 +35,16 @@ make deps-lint && make lint   # install ruff and run lint
 make image                    # build only
 make push                     # build and push (DOCKER_REPOSITORY=kperreau/whisperx)
 make push DOCKER_REPOSITORY=myuser/whisperx
+make release
 ```
 
-### scripts/docker-build-push.sh
+### _scripts/docker-build-push.sh
 
-Builds `linux/amd64` and `linux/arm64` with docker buildx. Options: `PUSH`, `DOCKER_REPOSITORY`, `PROJECT_PATH`.
+Builds `linux/amd64` with docker buildx. Options: `PUSH`, `DOCKER_REPOSITORY`, `PROJECT_PATH`.
 
 ```bash
-PUSH=false  ./scripts/docker-build-push.sh   # build only
-PUSH=true   ./scripts/docker-build-push.sh   # build and push
+PUSH=false  ./_scripts/docker-build-push.sh   # build only
+PUSH=true   ./_scripts/docker-build-push.sh   # build and push
 ```
 
 ### CI (GitHub Actions)

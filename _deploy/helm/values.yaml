@@ -1,0 +1,86 @@
+# Default values for whisperx
+
+whisperx:
+  replicaCount: 1
+  image:
+    repository: kperreau/whisperx
+    tag: v0.0.1
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: "0.5"
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  traefik:
+    enabled: false
+    host: whisperx.domain.com
+    # Routes exposed via Traefik (path or pathPrefix).
+    routes:
+      - path: /
+    certResolver: letsencrypt
+    stripPrefixes: []
+    middlewares: []
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+# - name: docker-auth
+
+rbac:
+  extraRules: []
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8000
+
+livenessProbe:
+  httpGet:
+    path: /livez
+    port: 8000
+  initialDelaySeconds: 30
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8000
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+argocd:
+  enabled: false
+  # Argo CD Application source (when enabled)
+  project: default
+  repoURL: https://github.com/kperreau/whisperx.git
+  targetRevision: HEAD
+  path: _deploy/helm
+  valueFiles:
+    - values.yaml

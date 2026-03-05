@@ -1,0 +1,12 @@
+apiVersion: v2
+name: whisperx
+description: Helm chart for WhisperX (speech recognition)
+
+type: application
+
+# Chart version (bump when changing templates).
+# Versions follow Semantic Versioning (https://semver.org/)
+version: 1.0.0
+
+# Application version (for display).
+appVersion: "0.0.1"

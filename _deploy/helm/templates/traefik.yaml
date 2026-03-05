@@ -1,0 +1,35 @@
+{{- if .Values.whisperx.traefik.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: whisperx
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "whisperx.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  {{- range .Values.whisperx.traefik.routes }}
+  - match: |
+      Host(`{{ default $.Values.whisperx.traefik.host .host }}`) && PathPrefix(`{{ .path | default "/" }}`)
+    kind: Rule
+    middlewares:
+      - name: compress
+        namespace: traefik
+      {{- if gt (len $.Values.whisperx.traefik.stripPrefixes | default list) 0 }}
+      - name: strip-prefix-whisperx
+        namespace: {{ $.Release.Namespace }}
+      {{- end }}
+      {{- with $.Values.whisperx.traefik.middlewares }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+    services:
+    - name: whisperx
+      scheme: http
+      passHostHeader: true
+      port: {{ $.Values.service.port }}
+  {{- end }}
+  tls:
+    certResolver: {{ .Values.whisperx.traefik.certResolver }}
+{{- end }}

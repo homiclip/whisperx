@@ -8,7 +8,7 @@ UVICORN := $(VENV_BIN)/uvicorn
 
 DOCKER_REPOSITORY ?= kperreau/whisperx
 
-.PHONY: venv deps deps-lint build run lint image push help
+.PHONY: venv deps deps-lint build run lint image push release help
 
 help:
 	@echo "Targets:"
@@ -20,6 +20,7 @@ help:
 	@echo "  lint      - Run ruff on the code (requires deps-lint)"
 	@echo "  image     - Build Docker image (multi-arch, no push)"
 	@echo "  push      - Build and push Docker image to $(DOCKER_REPOSITORY)"
+	@echo "  release   - Commit and push .semver and _deploy/helm/values.yaml after a successful image build+push"
 
 venv:
 	@test -d $(VENV) || python3 -m venv $(VENV)
@@ -35,6 +36,10 @@ deps-lint: venv
 	@$(PIP) install -q ruff
 	@echo "lint deps ready"
 
+upgrade: venv
+	@pip install -r requirements.txt --upgrade
+	@echo "deps ready"
+
 lint: deps-lint
 	@$(VENV_BIN)/ruff check .
 
@@ -45,7 +50,10 @@ run: deps
 	@$(UVICORN) app.main:app --host 0.0.0.0 --port 8000
 
 image:
-	@PUSH=false DOCKER_REPOSITORY="$(DOCKER_REPOSITORY)" ./scripts/docker-build-push.sh
+	@PUSH=false DOCKER_REPOSITORY="$(DOCKER_REPOSITORY)" ./_scripts/docker-build-push.sh
 
 push:
-	@PUSH=true DOCKER_REPOSITORY="$(DOCKER_REPOSITORY)" ./scripts/docker-build-push.sh
+	@PUSH=true DOCKER_REPOSITORY="$(DOCKER_REPOSITORY)" ./_scripts/docker-build-push.sh
+
+release:
+	@./_scripts/ci/release.sh
