@@ -4,7 +4,7 @@ whisperx:
   replicaCount: 1
   image:
     repository: kperreau/whisperx
-    tag: v0.0.1
+    tag: v1.0.1
     pullPolicy: Always
   resources:
     requests:
