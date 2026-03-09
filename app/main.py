@@ -52,6 +52,9 @@ VAD_OFFSET = float(os.getenv("VAD_OFFSET", "0.25"))
 VAD_PAD_ONSET = float(os.getenv("VAD_PAD_ONSET", "0.2"))
 VAD_PAD_OFFSET = float(os.getenv("VAD_PAD_OFFSET", "0.2"))
 
+# Technical paths excluded from logs (K8s probes, metrics, documentation) — middleware + uvicorn.access filter
+_SKIP_REQUEST_LOG_PATHS = frozenset({"/livez", "/readyz", "/metrics", "/health", "/docs", "/redoc", "/openapi.json"})
+
 # --- Global state (loaded at startup) ---
 _model = None
 _align_cache: dict[str, tuple] = {}  # lang -> (model_a, metadata)
@@ -104,10 +107,19 @@ def _setup_logging() -> None:
         processor=renderer,
         foreign_pre_chain=foreign,
     )
+    # Filtre uvicorn.access : ne pas logger les requêtes vers /livez, /readyz, /metrics, etc.
+    class _SkipUvicornAccessFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            if record.name != "uvicorn.access":
+                return True
+            msg = record.getMessage()
+            return not any(path in msg for path in _SKIP_REQUEST_LOG_PATHS)
+
     root = logging.getLogger()
     for h in root.handlers[:]:
         root.removeHandler(h)
     h = logging.StreamHandler(sys.stdout)
+    h.addFilter(_SkipUvicornAccessFilter())
     h.setFormatter(formatter)
     root.addHandler(h)
     root.setLevel(logging.INFO)
@@ -275,9 +287,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="WhisperX API", version="1.0.0", lifespan=lifespan)
-
-# Technical paths excluded from request logging (K8s probes, metrics, docs)
-_SKIP_REQUEST_LOG_PATHS = frozenset({"/livez", "/readyz", "/metrics", "/health", "/docs", "/redoc", "/openapi.json"})
 
 
 # --- Middleware: request_id, timing, structured logs, recover-like catch ---
