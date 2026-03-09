@@ -276,6 +276,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="WhisperX API", version="1.0.0", lifespan=lifespan)
 
+# Technical paths excluded from request logging (K8s probes, metrics, docs)
+_SKIP_REQUEST_LOG_PATHS = frozenset({"/livez", "/readyz", "/metrics", "/health", "/docs", "/redoc", "/openapi.json"})
+
 
 # --- Middleware: request_id, timing, structured logs, recover-like catch ---
 @app.middleware("http")
@@ -287,13 +290,14 @@ async def _request_logging(request: Request, call_next):
     try:
         response = await call_next(request)
         duration_ms = round((time.perf_counter() - start) * 1000, 2)
-        log.info(
-            "request",
-            path=request.url.path,
-            method=request.method,
-            status_code=response.status_code,
-            duration_ms=duration_ms,
-        )
+        if request.url.path not in _SKIP_REQUEST_LOG_PATHS:
+            log.info(
+                "request",
+                path=request.url.path,
+                method=request.method,
+                status_code=response.status_code,
+                duration_ms=duration_ms,
+            )
         response.headers["X-Request-ID"] = request_id
         structlog.contextvars.clear_contextvars()
         return response
