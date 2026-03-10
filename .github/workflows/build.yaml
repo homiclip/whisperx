@@ -46,4 +46,5 @@ jobs:
         if: github.ref == 'refs/heads/main'
         env:
           COMMIT_SHA: ${{ github.sha }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: make release
