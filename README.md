@@ -108,6 +108,7 @@ curl -X POST "http://localhost:8000/transcribe?language=en" -F "file=@output.mp3
 | `VAD_OFFSET`    | `0.25`  | VAD offset threshold.                                                       |
 | `VAD_PAD_ONSET` | `0.2`    | Padding (seconds) before speech start (Silero VAD).                        |
 | `VAD_PAD_OFFSET`| `0.2`    | Padding (seconds) after speech end (Silero VAD).                            |
+| `ALIGN_PRELOAD_LANGUAGES` | *(empty)* | Comma-separated language codes (e.g. `en,fr`) to download alignment models (wav2vec2) at startup so `/readyz` is 200 only when everything is ready and no download happens on first transcribe. |
 
 Runs **CPU only** (`int8`); no GPU support.
 

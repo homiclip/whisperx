@@ -32,8 +32,18 @@ def _torch_load_patched(*args, weights_only=None, **kwargs):
 
 torch.load = _torch_load_patched
 
+import warnings  # noqa: E402
+
 import structlog  # noqa: E402
 from structlog.stdlib import ProcessorFormatter  # noqa: E402
+
+# Suppress pyannote/torchcodec UserWarning: we load audio via whisperx (ffmpeg subprocess),
+# not via pyannote's built-in decoder, so this warning is harmless. See pyannote/audio/core/io.py
+warnings.filterwarnings(
+    "ignore",
+    message=r".*torchcodec.*",
+    category=UserWarning,
+)
 
 import whisperx  # noqa: E402
 from fastapi import FastAPI, UploadFile, HTTPException, Query, Request, Form  # noqa: E402
@@ -51,6 +61,8 @@ VAD_ONSET = float(os.getenv("VAD_ONSET", "0.35"))
 VAD_OFFSET = float(os.getenv("VAD_OFFSET", "0.25"))
 VAD_PAD_ONSET = float(os.getenv("VAD_PAD_ONSET", "0.2"))
 VAD_PAD_OFFSET = float(os.getenv("VAD_PAD_OFFSET", "0.2"))
+# Comma-separated language codes to preload alignment models at startup (e.g. "en,fr"). Avoids downloads on first transcribe.
+ALIGN_PRELOAD_LANGUAGES = [s.strip().lower() for s in os.getenv("ALIGN_PRELOAD_LANGUAGES", "").split(",") if s.strip()]
 
 # Technical paths excluded from logs (K8s probes, metrics, documentation) — middleware + uvicorn.access filter
 _SKIP_REQUEST_LOG_PATHS = frozenset({"/livez", "/readyz", "/metrics", "/health", "/docs", "/redoc", "/openapi.json"})
@@ -277,6 +289,14 @@ async def lifespan(app: FastAPI):
         },
     )
     log.info("model_loaded", model=MODEL_NAME, device=DEVICE)
+
+    # Preload alignment models (wav2vec2) so no download happens on first transcribe for these languages.
+    for lang in ALIGN_PRELOAD_LANGUAGES:
+        try:
+            _load_align(lang)
+            log.info("align_model_preloaded", language=lang)
+        except Exception as e:
+            log.warning("align_model_preload_failed", language=lang, error=str(e))
 
     yield
 
