@@ -1,4 +1,4 @@
-"""OpenTelemetry traces and metrics (OTLP). Disabled by default. Config aligned with homiclip-backend."""
+"""OpenTelemetry: traces via OTLP (push), metrics via /metrics (pull). Disabled by default."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from app import config
 def _setup_otel_impl(app: FastAPI) -> None:
     from opentelemetry import trace, metrics
     from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-    from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+    from opentelemetry.exporter.prometheus import PrometheusMetricReader
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
     from opentelemetry.propagate import set_global_textmap
     from opentelemetry.propagators.composite import CompositePropagator
@@ -18,7 +18,6 @@ def _setup_otel_impl(app: FastAPI) -> None:
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
     from opentelemetry.sdk.trace.sampling import ParentBased, TraceIdRatioBased
     from opentelemetry.sdk.metrics import MeterProvider
-    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
     from opentelemetry.baggage.propagation import W3CBaggagePropagator
@@ -41,10 +40,8 @@ def _setup_otel_impl(app: FastAPI) -> None:
         tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
         trace.set_tracer_provider(tracer_provider)
     if config.OTEL_METRICS_ENABLED:
-        reader = PeriodicExportingMetricReader(
-            OTLPMetricExporter(),
-            export_interval_millis=60_000,
-        )
+        # Pull model: Prometheus scrapes /metrics; no OTLP push for metrics
+        reader = PrometheusMetricReader()
         meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
         metrics.set_meter_provider(meter_provider)
     excluded_urls = "/livez,/readyz,/metrics,/health,/docs,/redoc,/openapi.json"

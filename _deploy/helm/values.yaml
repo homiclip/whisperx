@@ -1,7 +1,7 @@
 # Default values for whisperx
 
 # Optional env vars for the app (e.g. ALIGN_PRELOAD_LANGUAGES=en,fr to preload alignment models at startup).
-# OpenTelemetry (traces + metrics), disabled by default. Config aligned with homiclip-backend.
+# OpenTelemetry: traces = OTLP push; metrics = pull on GET /metrics. Disabled by default.
 # Example to enable (TraceContext+Baggage propagator, X-Trace-Id in response and logs):
 #   - name: OTEL_ENABLED
 #     value: "true"
@@ -80,12 +80,15 @@ securityContext: {}
 service:
   enabled: true
   type: ClusterIP
-  port: 8000
+  # API (transcribe, docs)
+  port: 3000
+  # Technical server: livez, readyz, metrics (probes and Prometheus scrape)
+  technicalPort: 5000
 
 livenessProbe:
   httpGet:
     path: /livez
-    port: 8000
+    port: 5000
   initialDelaySeconds: 30
   timeoutSeconds: 5
   periodSeconds: 10
@@ -94,7 +97,7 @@ livenessProbe:
 readinessProbe:
   httpGet:
     path: /readyz
-    port: 8000
+    port: 5000
   initialDelaySeconds: 10
   timeoutSeconds: 5
   periodSeconds: 10

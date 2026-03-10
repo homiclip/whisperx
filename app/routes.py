@@ -1,4 +1,4 @@
-"""API routes: health, readiness, transcribe."""
+"""API routes: transcribe (livez, readyz, metrics are on the technical port 5000)."""
 
 from __future__ import annotations
 
@@ -6,31 +6,10 @@ import os
 import tempfile
 
 from fastapi import APIRouter, Form, HTTPException, Query, UploadFile
-from fastapi.responses import JSONResponse
 
-from app import config
 from app import model
 
 router = APIRouter()
-
-
-@router.get("/livez")
-def livez() -> dict:
-    return {"status": "ok"}
-
-
-@router.get("/readyz")
-def readyz() -> dict:
-    if not model.is_ready():
-        return JSONResponse(
-            status_code=503,
-            content={
-                "status": "not_ready",
-                "model": config.MODEL_NAME,
-                "message": "Model not loaded",
-            },
-        )
-    return {"status": "ok", "model": config.MODEL_NAME}
 
 
 @router.post("/transcribe")

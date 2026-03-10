@@ -13,6 +13,10 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    - port: {{ .Values.service.technicalPort }}
+      targetPort: technical
+      protocol: TCP
+      name: technical
   selector:
     app.kubernetes.io/name: whisperx
     app.kubernetes.io/instance: whisperx

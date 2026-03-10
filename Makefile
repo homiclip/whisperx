@@ -16,7 +16,7 @@ help:
 	@echo "  deps      - Install/update deps (torch CPU + requirements); creates venv if needed"
 	@echo "  deps-lint - Install ruff (for lint); creates venv if needed"
 	@echo "  build     - Check that app imports (requires deps)"
-	@echo "  run       - Run uvicorn (requires deps)"
+	@echo "  run       - Run API on 3000 and technical server on 5000 (requires deps)"
 	@echo "  lint      - Run ruff on the code (requires deps-lint)"
 	@echo "  image     - Build Docker image (multi-arch, no push)"
 	@echo "  push      - Build and push Docker image to $(DOCKER_REPOSITORY)"
@@ -47,7 +47,7 @@ build: deps
 	@$(PYTHON) -c "from app.main import app; print('ok')"
 
 run: deps
-	@$(UVICORN) app.main:app --host 0.0.0.0 --port 8001
+	@$(PYTHON) -m app.run
 
 image:
 	@PUSH=false DOCKER_REPOSITORY="$(DOCKER_REPOSITORY)" ./_scripts/docker-build-push.sh

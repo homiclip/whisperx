@@ -43,7 +43,7 @@ COPY --from=builder /opt/venv /opt/venv
 # Copy app only
 COPY app/ ./app/
 
-EXPOSE 8000
+EXPOSE 3000 5000
 
-# Single worker to avoid duplicating the model in memory
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# API on 3000, technical (livez, readyz, metrics) on 5000. Single process.
+CMD ["python", "-m", "app.run"]

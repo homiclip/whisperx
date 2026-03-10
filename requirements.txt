@@ -5,8 +5,9 @@ uvicorn[standard]>=0.41.0
 python-multipart>=0.0.22
 structlog>=25.5.0
 
-# OpenTelemetry (traces + metrics), optional — enable via OTEL_ENABLED=true
+# OpenTelemetry (traces push OTLP, metrics pull /metrics), optional — enable via OTEL_ENABLED=true
 opentelemetry-api>=1.28.0
 opentelemetry-sdk>=1.28.0
 opentelemetry-exporter-otlp-proto-http>=1.28.0
+opentelemetry-exporter-prometheus>=0.45b0
 opentelemetry-instrumentation-fastapi>=0.49b0
