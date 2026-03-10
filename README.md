@@ -116,6 +116,7 @@ curl -X POST "http://localhost:3000/transcribe?language=en" -F "file=@output.mp3
 | `VAD_PAD_OFFSET`| `0.2`    | Padding (seconds) after speech end (Silero VAD).                            |
 | `ALIGN_PRELOAD_LANGUAGES` | *(empty)* | Comma-separated language codes (e.g. `en,fr`) to download alignment models (wav2vec2) at startup so `/readyz` is 200 only when everything is ready and no download happens on first transcribe. |
 | `TECHNICAL_PORT` | `5000` | Port for the technical server (livez, readyz, metrics). API stays on 3000. |
+| `METRICS_NAMESPACE` | `whisperx` | Prometheus metrics namespace (prefix for metric names, e.g. `whisperx_http_requests_total`). Set to empty for no prefix. |
 
 **OpenTelemetry (telemetry)** — disabled by default. Traces are exported via OTLP (push). Metrics are exposed on `GET /metrics` (technical port) for Prometheus/Alloy scrape (pull). TraceContext + Baggage propagation; `trace_id` in logs and `X-Trace-Id` header.
 

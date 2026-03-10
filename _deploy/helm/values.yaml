@@ -1,6 +1,9 @@
 # Default values for whisperx
 
 # Optional env vars for the app (e.g. ALIGN_PRELOAD_LANGUAGES=en,fr to preload alignment models at startup).
+# Metrics: METRICS_NAMESPACE (default "whisperx") prefixes Prometheus metric names on GET /metrics.
+#   - name: METRICS_NAMESPACE
+#     value: "whisperx"
 # OpenTelemetry: traces = OTLP push; metrics = pull on GET /metrics. Disabled by default.
 # Example to enable (TraceContext+Baggage propagator, X-Trace-Id in response and logs):
 #   - name: OTEL_ENABLED
@@ -36,8 +39,8 @@ whisperx:
     enabled: false
     minReplicas: 1
     maxReplicas: 3
-    # Scale based on requests per second per pod. Requires custom metrics in the cluster
-    # (e.g. Prometheus Adapter with a rule exposing http_requests_per_second per pod).
+    # Scale based on requests per second per pod. Backend exposes http_requests_total on /metrics;
+    # Prometheus Adapter must have a rule that computes rate() and exposes it as http_requests_per_second per pod.
     targetRequestsPerSecond: 3
     # Metric name exposed by your metrics adapter (must match the adapter rule name).
     requestsPerSecondMetricName: http_requests_per_second

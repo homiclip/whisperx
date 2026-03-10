@@ -10,6 +10,7 @@ from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from app import config
+from app import metrics
 from app import otel
 
 # Use structlog.get_logger so we have a valid logger at request time (logging_config.log
@@ -24,8 +25,11 @@ async def request_logging_middleware(request: Request, call_next):
     start = time.perf_counter()
     try:
         response = await call_next(request)
+        duration_sec = time.perf_counter() - start
+        metrics.record_http_request(request.method, request.url.path, response.status_code)
+        metrics.record_http_latency(request.method, request.url.path, response.status_code, duration_sec)
         trace_id_hex = otel.get_trace_id_hex()
-        duration_ms = round((time.perf_counter() - start) * 1000, 2)
+        duration_ms = round(duration_sec * 1000, 2)
         if request.url.path not in config.SKIP_REQUEST_LOG_PATHS:
             log.info(
                 "request",
@@ -39,12 +43,18 @@ async def request_logging_middleware(request: Request, call_next):
             response.headers["X-Trace-Id"] = trace_id_hex
         structlog.contextvars.clear_contextvars()
         return response
-    except HTTPException:
+    except HTTPException as exc:
+        duration_sec = time.perf_counter() - start
+        metrics.record_http_request(request.method, request.url.path, exc.status_code)
+        metrics.record_http_latency(request.method, request.url.path, exc.status_code, duration_sec)
         structlog.contextvars.clear_contextvars()
         raise
     except Exception as e:
+        duration_sec = time.perf_counter() - start
+        metrics.record_http_request(request.method, request.url.path, 500)
+        metrics.record_http_latency(request.method, request.url.path, 500, duration_sec)
         trace_id_hex = otel.get_trace_id_hex()
-        duration_ms = round((time.perf_counter() - start) * 1000, 2)
+        duration_ms = round(duration_sec * 1000, 2)
         log.exception(
             "request_failed",
             path=request.url.path,

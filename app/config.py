@@ -43,6 +43,9 @@ OTEL_SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME", "whisperx")
 OTEL_SERVICE_VERSION = os.getenv("OTEL_SERVICE_VERSION", "1.0.0")
 OTEL_TRACES_SAMPLER_ARG = float(os.getenv("OTEL_TRACES_SAMPLER_ARG", "1.0"))
 
+# Prometheus metrics namespace (prefix for metric names, e.g. whisperx_http_requests_total)
+METRICS_NAMESPACE = os.getenv("METRICS_NAMESPACE", "whisperx").strip() or "whisperx"
+
 # Technical server (livez, readyz, metrics) — separate port for probes and scraping
 TECHNICAL_PORT = int(os.getenv("TECHNICAL_PORT", "5000"))
 
