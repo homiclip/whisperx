@@ -104,7 +104,7 @@ argocd:
   enabled: false
   # Argo CD Application source (when enabled)
   project: default
-  repoURL: https://github.com/kperreau/whisperx.git
+  repoURL: https://github.com/homiclip/whisperx.git
   targetRevision: HEAD
   path: _deploy/helm
   valueFiles:
