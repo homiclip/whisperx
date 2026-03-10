@@ -47,7 +47,7 @@ build: deps
 	@$(PYTHON) -c "from app.main import app; print('ok')"
 
 run: deps
-	@$(UVICORN) app.main:app --host 0.0.0.0 --port 8000
+	@$(UVICORN) app.main:app --host 0.0.0.0 --port 8001
 
 image:
 	@PUSH=false DOCKER_REPOSITORY="$(DOCKER_REPOSITORY)" ./_scripts/docker-build-push.sh

@@ -14,7 +14,16 @@ spec:
   minReplicas: {{ .Values.whisperx.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.whisperx.autoscaling.maxReplicas }}
   metrics:
-    {{- if .Values.whisperx.autoscaling.targetCPUUtilizationPercentage }}
+    {{- if .Values.whisperx.autoscaling.targetRequestsPerSecond }}
+    - type: Pods
+      pods:
+        metric:
+          name: {{ .Values.whisperx.autoscaling.requestsPerSecondMetricName }}
+        target:
+          type: AverageValue
+          averageValue: {{ .Values.whisperx.autoscaling.targetRequestsPerSecond | quote }}
+    {{- end }}
+    {{- if and .Values.whisperx.autoscaling.targetCPUUtilizationPercentage (ne .Values.whisperx.autoscaling.targetCPUUtilizationPercentage "") }}
     - type: Resource
       resource:
         name: cpu
@@ -22,7 +31,7 @@ spec:
           type: Utilization
           averageUtilization: {{ .Values.whisperx.autoscaling.targetCPUUtilizationPercentage }}
     {{- end }}
-    {{- if .Values.whisperx.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- if and .Values.whisperx.autoscaling.targetMemoryUtilizationPercentage (ne .Values.whisperx.autoscaling.targetMemoryUtilizationPercentage "") }}
     - type: Resource
       resource:
         name: memory

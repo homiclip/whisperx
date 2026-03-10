@@ -27,6 +27,18 @@ spec:
         {{- end }}
       {{- with .Values.podAnnotations }}
       annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "{{ .Values.readinessProbe.httpGet.port }}"
+        prometheus.io/scheme: "http"
+        {{- if .Values.pprof.enabled }}
+        profiles.grafana.com/memory.scrape: "true"
+        profiles.grafana.com/memory.port: "{{ .Values.readinessProbe.httpGet.port }}"
+        profiles.grafana.com/cpu.scrape: "true"
+        profiles.grafana.com/cpu.port: "{{ .Values.readinessProbe.httpGet.port }}"
+        profiles.grafana.com/goroutine.scrape: "true"
+        profiles.grafana.com/goroutine.port: "{{ .Values.readinessProbe.httpGet.port }}"
+        {{- end }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:

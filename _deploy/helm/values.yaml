@@ -1,6 +1,18 @@
 # Default values for whisperx
 
 # Optional env vars for the app (e.g. ALIGN_PRELOAD_LANGUAGES=en,fr to preload alignment models at startup).
+# OpenTelemetry (traces + metrics), disabled by default. Config aligned with homiclip-backend.
+# Example to enable (TraceContext+Baggage propagator, X-Trace-Id in response and logs):
+#   - name: OTEL_ENABLED
+#     value: "true"
+#   - name: OTEL_EXPORTER_OTLP_ENDPOINT
+#     value: "http://grafana-alloy.grafana-alloy:4318"
+#   - name: OTEL_SERVICE_NAME
+#     value: "whisperx"
+#   - name: OTEL_SERVICE_VERSION
+#     value: "1.0.0"
+#   - name: OTEL_TRACES_SAMPLER_ARG
+#     value: "0.5"
 extraEnv:
   - name: ALIGN_PRELOAD_LANGUAGES
     value: "en,fr"
@@ -24,8 +36,14 @@ whisperx:
     enabled: false
     minReplicas: 1
     maxReplicas: 3
-    targetCPUUtilizationPercentage: 70
-    targetMemoryUtilizationPercentage: 80
+    # Scale based on requests per second per pod. Requires custom metrics in the cluster
+    # (e.g. Prometheus Adapter with a rule exposing http_requests_per_second per pod).
+    targetRequestsPerSecond: 3
+    # Metric name exposed by your metrics adapter (must match the adapter rule name).
+    requestsPerSecondMetricName: http_requests_per_second
+    # Optional: fallback to CPU/memory if set (use with targetRequestsPerSecond or alone).
+    targetCPUUtilizationPercentage: ""
+    targetMemoryUtilizationPercentage: ""
   traefik:
     enabled: false
     host: whisperx.domain.com
@@ -91,3 +109,6 @@ argocd:
   path: _deploy/helm
   valueFiles:
     - values.yaml
+
+pprof:
+  enabled: false

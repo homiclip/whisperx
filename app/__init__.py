@@ -1,0 +1,1 @@
+"""WhisperX API application."""
