@@ -44,9 +44,9 @@ OTEL_SERVICE_VERSION = os.getenv("OTEL_SERVICE_VERSION", "1.0.0")
 OTEL_TRACES_SAMPLER_ARG = float(os.getenv("OTEL_TRACES_SAMPLER_ARG", "1.0"))
 
 # Technical server (livez, readyz, metrics) — separate port for probes and scraping
-TECHNICAL_PORT = int(os.getenv("TECHNICAL_PORT", "5120"))
+TECHNICAL_PORT = int(os.getenv("TECHNICAL_PORT", "5000"))
 
-HTTP_PORT = int(os.getenv("HTTP_PORT", "3120"))
+HTTP_PORT = int(os.getenv("HTTP_PORT", "3000"))
 
 # Paths excluded from request logs (probes, metrics, docs)
 SKIP_REQUEST_LOG_PATHS = frozenset({
