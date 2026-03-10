@@ -9,6 +9,7 @@ from dataclasses import replace
 
 import whisperx
 
+from app import audio
 from app import config
 from app import logging_config
 
@@ -61,7 +62,7 @@ def transcribe_sync(
 ) -> dict:
     """Run WhisperX transcribe (and optional align) on an audio file. Call from executor."""
     global _model
-    audio = whisperx.load_audio(path)
+    audio_arr = audio.load_audio(path)
     old_opts = None
     if initial_prompt is not None:
         old_opts = _model.options
@@ -69,14 +70,14 @@ def transcribe_sync(
     try:
         if language:
             result = _model.transcribe(
-                audio,
+                audio_arr,
                 batch_size=config.BATCH_SIZE,
                 language=language,
                 chunk_size=config.VAD_CHUNK_SIZE,
             )
         else:
             result = _model.transcribe(
-                audio,
+                audio_arr,
                 batch_size=config.BATCH_SIZE,
                 chunk_size=config.VAD_CHUNK_SIZE,
             )
@@ -86,7 +87,7 @@ def transcribe_sync(
     if align and result.get("segments"):
         model_a, meta = _load_align(result["language"])
         aligned = whisperx.align(
-            result["segments"], model_a, meta, audio, config.DEVICE, return_char_alignments=False
+            result["segments"], model_a, meta, audio_arr, config.DEVICE, return_char_alignments=False
         )
         result = {**result, **aligned}
     return result
@@ -125,7 +126,12 @@ async def lifespan(app: object):
             "pad_offset": config.VAD_PAD_OFFSET,
         },
     )
-    log.info("model_loaded", model=config.MODEL_NAME, device=config.DEVICE)
+    log.info(
+        "model_loaded",
+        model=config.MODEL_NAME,
+        device=config.DEVICE,
+        audio_loader=audio.get_loader_name(),
+    )
     for lang in config.ALIGN_PRELOAD_LANGUAGES:
         try:
             _load_align(lang)

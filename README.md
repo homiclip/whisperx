@@ -64,7 +64,7 @@ Uses **docker/setup-qemu-action** so `linux/arm64` can be built on amd64 runners
 - **GET /readyz** — Readiness: returns 200 only when the model is loaded and ready to transcribe. Use for `readinessProbe`. Returns 503 while loading or if the model is unavailable.
 - **POST /transcribe** — Upload an audio file (multipart)
 
-Responses include an **X-Request-ID** header (or the one sent in the request) for tracing.
+Responses include an **X-Request-ID** header (or the one sent in the request) for tracing. When OpenTelemetry traces are enabled, responses also include **X-Trace-Id** (32-char hex), and the same `trace_id` is added to structured logs.
 
 ### POST /transcribe
 
@@ -110,11 +110,24 @@ curl -X POST "http://localhost:8000/transcribe?language=en" -F "file=@output.mp3
 | `VAD_PAD_OFFSET`| `0.2`    | Padding (seconds) after speech end (Silero VAD).                            |
 | `ALIGN_PRELOAD_LANGUAGES` | *(empty)* | Comma-separated language codes (e.g. `en,fr`) to download alignment models (wav2vec2) at startup so `/readyz` is 200 only when everything is ready and no download happens on first transcribe. |
 
+**OpenTelemetry (telemetry)** — disabled by default. Enables OTLP trace and/or metrics export (HTTP), TraceContext + Baggage propagation, and injects `trace_id` into logs and the `X-Trace-Id` response header.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OTEL_ENABLED` | `false` | Master switch: enable OpenTelemetry (traces + metrics follow `OTEL_TRACES_ENABLED` / `OTEL_METRICS_ENABLED` unless overridden). |
+| `OTEL_TRACES_ENABLED` | *(= OTEL_ENABLED)* | Enable trace export (OTLP). When true, each request gets a span and `X-Trace-Id` is set; `trace_id` is added to structlog. |
+| `OTEL_METRICS_ENABLED` | *(= OTEL_ENABLED)* | Enable metrics export (OTLP, push every 60s). |
+| `OTEL_SERVICE_NAME` | `whisperx` | Service name for resource attributes. |
+| `OTEL_SERVICE_VERSION` | `1.0.0` | Service version for resource attributes. |
+| `OTEL_TRACES_SAMPLER_ARG` | `1.0` | Root sampler ratio (0.0–1.0). `1.0` = sample all; lower values reduce volume. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | *(SDK default)* | OTLP HTTP endpoint (e.g. `http://grafana-alloy:4318`). Used for both traces and metrics. |
+
 Runs **CPU only** (`int8`); no GPU support.
 
 ## Production
 
-- **Logs:** set `LOG_FORMAT=json` for structured JSON (timestamp, level, path, method, status_code, duration_ms, request_id, etc.) for Grafana/Loki.
+- **Logs:** set `LOG_FORMAT=json` for structured JSON (timestamp, level, path, method, status_code, duration_ms, request_id, etc.) for Grafana/Loki. With `OTEL_TRACES_ENABLED=true`, each log line includes `trace_id` for correlation with traces.
+- **Telemetry:** set `OTEL_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT` (e.g. Grafana Alloy, Jaeger, Otel Collector) to export traces and metrics (OTLP). You can enable only traces or only metrics via `OTEL_TRACES_ENABLED` / `OTEL_METRICS_ENABLED`.
 - **Recovery:** unhandled exceptions are caught and logged; the server returns 500 instead of crashing. SIGTERM/SIGINT are logged and delegated to uvicorn for graceful shutdown.
 
 ## Image

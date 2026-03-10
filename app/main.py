@@ -22,7 +22,7 @@ def _torch_load_patched(*args, weights_only=None, **kwargs):
 
 torch.load = _torch_load_patched
 
-# Suppress pyannote/torchcodec UserWarning (we load audio via whisperx, not pyannote's decoder).
+# Suppress pyannote/torchcodec UserWarning when torchcodec is missing (we fall back to whisperx).
 # Match by module: message starts with \n so a message regex often fails.
 warnings.filterwarnings("ignore", module="pyannote.audio.core.io", category=UserWarning)
 
