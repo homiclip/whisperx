@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: whisperx
     app.kubernetes.io/instance: whisperx
 spec:
-  {{- if not .Values.whisperx.autoscaling.enabled }}
+  {{- if and (not .Values.whisperx.autoscaling.enabled) (not .Values.keda.enabled) }}
   replicas: {{ .Values.whisperx.replicaCount }}
   {{- end }}
   revisionHistoryLimit: 3

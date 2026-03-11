@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from prometheus_client import Counter, Histogram, REGISTRY
+from prometheus_client import Counter, Gauge, Histogram, REGISTRY
 
 from app import config
 
@@ -12,6 +12,15 @@ HTTP_REQUESTS_TOTAL = Counter(
     "http_requests_total",
     "Total HTTP requests by status code, method and path",
     ["status_code", "method", "path"],
+    namespace=config.METRICS_NAMESPACE,
+    registry=REGISTRY,
+)
+
+# Number of /transcribe requests currently in progress (waiting or running) per pod.
+# Used by KEDA to scale on queue depth: sum over pods >= threshold → scale up.
+TRANSCRIBE_REQUESTS_IN_FLIGHT = Gauge(
+    "transcribe_requests_in_flight",
+    "Number of transcribe requests currently in progress (queue + running)",
     namespace=config.METRICS_NAMESPACE,
     registry=REGISTRY,
 )

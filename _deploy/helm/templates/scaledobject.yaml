@@ -1,0 +1,21 @@
+{{- if .Values.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: whisperx
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "whisperx.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: whisperx
+  minReplicaCount: {{ .Values.keda.minReplicaCount }}
+  maxReplicaCount: {{ .Values.keda.maxReplicaCount }}
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: {{ .Values.keda.prometheus.serverAddress | quote }}
+        query: {{ .Values.keda.prometheus.query | quote }}
+        threshold: {{ .Values.keda.prometheus.threshold | quote }}
+        ignoreNullValues: {{ .Values.keda.prometheus.ignoreNullValues | quote }}
+{{- end }}

@@ -54,6 +54,20 @@ whisperx:
   tolerations: []
   affinity: {}
 
+# KEDA ScaledObject (disabled by default). Scale on transcribe queue depth via Prometheus.
+# Mutually exclusive with whisperx.autoscaling: only one of HPA or KEDA should be enabled.
+keda:
+  enabled: false
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  prometheus:
+    serverAddress: http://grafana-mimir-gateway.grafana/prometheus
+    # Sum of transcribe_requests_in_flight across pods; scale when >= threshold.
+    # If your Prometheus adds namespace/pod labels, scope e.g. namespace=Release.Namespace, pod=~"whisperx-.*"
+    query: sum(whisperx_transcribe_requests_in_flight) or vector(0)
+    threshold: "3"
+    ignoreNullValues: "true"
+
 nameOverride: ""
 fullnameOverride: ""
 

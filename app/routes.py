@@ -8,6 +8,7 @@ import tempfile
 from fastapi import APIRouter, Form, HTTPException, Query, UploadFile
 
 from app import model
+from app.metrics import TRANSCRIBE_REQUESTS_IN_FLIGHT
 
 router = APIRouter()
 
@@ -18,6 +19,19 @@ async def transcribe(
     language: str | None = Query(None, description="Language code (en, fr, de, …). Auto-detect if omitted."),
     align: bool = Query(True, description="Enable word-level alignment (wav2vec2)."),
     initial_prompt: str | None = Form(None, description="Optional text to guide transcription."),
+) -> dict:
+    TRANSCRIBE_REQUESTS_IN_FLIGHT.inc()
+    try:
+        return await _transcribe_impl(file, language, align, initial_prompt)
+    finally:
+        TRANSCRIBE_REQUESTS_IN_FLIGHT.dec()
+
+
+async def _transcribe_impl(
+    file: UploadFile,
+    language: str | None,
+    align: bool,
+    initial_prompt: str | None,
 ) -> dict:
     if not file.filename or not any(
         file.filename.lower().endswith(ext)
