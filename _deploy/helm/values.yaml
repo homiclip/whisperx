@@ -39,14 +39,8 @@ whisperx:
     enabled: false
     minReplicas: 1
     maxReplicas: 3
-    # Scale based on requests per second per pod. Backend exposes http_requests_total on /metrics;
-    # Prometheus Adapter must have a rule that computes rate() and exposes it as http_requests_per_second per pod.
-    targetRequestsPerSecond: 3
-    # Metric name exposed by your metrics adapter (must match the adapter rule name).
-    requestsPerSecondMetricName: http_requests_per_second
-    # Optional: fallback to CPU/memory if set (use with targetRequestsPerSecond or alone).
-    targetCPUUtilizationPercentage: ""
-    targetMemoryUtilizationPercentage: ""
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
   traefik:
     enabled: false
     host: whisperx.domain.com
