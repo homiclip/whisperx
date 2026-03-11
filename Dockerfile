@@ -23,6 +23,14 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Shrink venv: drop caches, tests, docs, examples
+RUN find /opt/venv -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true \
+ && find /opt/venv -name "*.pyc" -delete \
+ && find /opt/venv -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true \
+ && find /opt/venv -type d -name "test" -exec rm -rf {} + 2>/dev/null || true \
+ && find /opt/venv -type d -name "docs" -exec rm -rf {} + 2>/dev/null || true \
+ && find /opt/venv -type d -name "examples" -exec rm -rf {} + 2>/dev/null || true
+
 # ============== runtime ==============
 FROM python:3.12-slim-bookworm AS runtime
 
@@ -31,9 +39,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     LOG_FORMAT=json \
     PATH="/opt/venv/bin:$PATH"
 
-# ffmpeg only in runtime stage
+# ffmpeg only in runtime stage; drop doc/man to save space
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man
 
 WORKDIR /app
 
